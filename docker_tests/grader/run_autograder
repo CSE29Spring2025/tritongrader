@@ -1,0 +1,5 @@
+#!/bin/bash
+
+mkfifo error-pipe
+tee -a error.log < error-pipe >&2 &
+python3 grade.py 2> error-pipe

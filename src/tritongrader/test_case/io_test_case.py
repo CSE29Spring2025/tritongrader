@@ -30,7 +30,7 @@ class IOTestCase(TestCaseBase):
         name: str = "Test Case",
         point_value: float = 1,
         timeout: float = TestCaseBase.DEFAULT_TIMEOUT,
-        arm: bool = True,
+        arm: bool = False,
         binary_io: bool = False,
         hidden: bool = False,
     ):

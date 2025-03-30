@@ -28,7 +28,7 @@ class BasicTestCase(TestCaseBase):
         point_value: float = 1,
         expected_retcode: int = 0,
         timeout: float = TestCaseBase.DEFAULT_TIMEOUT,
-        arm: bool = True,
+        arm: bool = False,
         binary_io: bool = False,
         hidden: bool = False,
     ):

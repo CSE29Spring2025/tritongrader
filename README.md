@@ -1,8 +1,35 @@
-# tritongrader 
+# tritongrader (CSE 29 Fork)
 
 A lightweight Python library for handling basic I/O-based grading for
-programming assignments. Originally developed for UCSD lower-division 
-CSE courses.
+programming assignments in CSE 29, which are written in C and compiled in an x86
+environment.
+
+## Additions compared to upstream (WIP)
+
+- Secured environment for running student code
+  - No file access in `/autograder` outside `/autograder/submission`
+  - No network access
+  - Execution as a deprivileged `student` user rather than `root`
+- Student-friendly messages for problems
+  - Compiler errors
+  - Linker errors
+  - Termination due to a signal
+    - Interrupted (SIGINT)
+    - Segmentation fault (SIGSEGV)
+    - Abort (SIGABRT)
+    - Bus error (SIGBUS)
+    - Illegal instruction (SIGILL)
+    - IOT (SIGIOT)
+    - Killed (SIGKILL)
+    - Terminated (SIGTERM)
+  - Memory leaks (Valgrind, if enabled)
+  - Non-zero return code
+  - Unexpected stderr output
+- Options for restricting `#include` headers
+- Check for expected function definitions
+- Detection of whitespace-only discrepancies and visualization of them
+- Tests to verify most of the above
+- Removal of DuckDuckWhale telemetry
 
 ## Installation
 
@@ -10,7 +37,7 @@ For now, the project is not hosted on PyPI. To install the library,
 use `pip install` directly from this repository.
 
 ```bash
-pip install git+https://github.com/jyu283/tritongrader.git
+pip install git+https://github.com/CSE29Spring2025/tritongrader.git
 ```
 
 See more detailed instructions for installation via `pip` [here][1].
@@ -104,7 +131,7 @@ be filled in by the test runner:
 #### Bulk Loading
 
 We provide a bulk-loading interface for `IOTestCase` objects, because these test
-cases usually come in a fairly large number. 
+cases usually come in a fairly large number.
 
 A bulk loader object can be created and configured from the `Autograder` object
 by calling the `io_tests_bulk_loader` with the desired parameters, which will
