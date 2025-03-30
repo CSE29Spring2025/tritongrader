@@ -6,4 +6,4 @@ mkdir -p /autograder/results /autograder/submission
 chown -R student /autograder/submission
 
 # Only for our tests
-pip install -r requirements.txt
+pip install -r /autograder/source/requirements.txt
