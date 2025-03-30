@@ -11,7 +11,7 @@ if __name__ == "__main__":
         "/autograder/source/tests/",
         required_files=["submission.c"],
         verbose_rubric=True,
-        build_command="gcc -Wall -Werror -o submission submission.c",
+        build_command="pwd && gcc -Wall -Werror -o submission submission.c",
         compile_points=1,
     )
     
@@ -37,3 +37,4 @@ if __name__ == "__main__":
         failure_test.result.stdout,
         failure_test.result.stderr
     )
+    assert len(failure_test.result.stdout) < 1_000_000

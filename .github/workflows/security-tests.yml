@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: ["files", "network", "spam", "user"]
+        test: ["files", "spam", "user"]
 
     steps:
     - uses: actions/checkout@v3

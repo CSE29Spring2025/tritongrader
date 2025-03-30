@@ -8,7 +8,7 @@ environment.
 
 - Secured environment for running student code
   - No file access in `/autograder` outside `/autograder/submission`
-  - No network access
+  - ~~No network access~~
   - Execution as a deprivileged `student` user rather than `root`
 - Student-friendly messages for problems
   - Compiler errors
