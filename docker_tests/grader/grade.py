@@ -16,19 +16,13 @@ if __name__ == "__main__":
         arm=False,
     )
     
-    ag.add_test(BasicTestCase(
+    failure_test = BasicTestCase(
         "./submission",
         name="Submission failure test",
         point_value=5,
         arm=False
-    ))
-
+    )
+    ag.add_test(failure_test)
     ag.execute()
 
-    formatter = GradescopeResultsFormatter(
-        src=ag,
-        hidden_tests_setting="after_published",
-        html_diff=True,
-    )
-
-    pprint.pprint(formatter.execute())
+    assert failure_test.result.passed
