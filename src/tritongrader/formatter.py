@@ -8,6 +8,7 @@ from tritongrader.test_case import TestCaseBase
 from tritongrader.test_case import IOTestCase
 from tritongrader.test_case import BasicTestCase
 from tritongrader.test_case import CustomTestCase
+from tritongrader.test_case.static_analysis_test_case import HeaderCheckTestCase, StaticAnalysisTestCase
 
 logger = logging.getLogger("tritongrader.formatter")
 
@@ -17,6 +18,8 @@ class ResultsFormatterBase:
         self.formatters: Dict[TestCaseBase, Callable[[TestCaseBase], None]] = {
             IOTestCase: self.format_io_test,
             BasicTestCase: self.format_basic_test,
+            StaticAnalysisTestCase: self.format_basic_test,
+            HeaderCheckTestCase: self.format_basic_test,  # TODO make more specific
             CustomTestCase: self.format_custom_test,
         }
         self.test_cases: List[TestCaseBase] = []
