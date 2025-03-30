@@ -1,7 +1,4 @@
-import pprint
-
 from tritongrader.autograder import Autograder  # noqa
-from tritongrader.formatter import GradescopeResultsFormatter  # noqa
 from tritongrader.test_case import BasicTestCase  # noqa
 
 if __name__ == "__main__":
@@ -25,4 +22,7 @@ if __name__ == "__main__":
     ag.add_test(failure_test)
     ag.execute()
 
-    assert failure_test.result.passed
+    assert failure_test.result.passed, (
+        failure_test.result.stdout,
+        failure_test.result.stderr
+    )

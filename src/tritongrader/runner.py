@@ -11,7 +11,7 @@ logger = logging.getLogger("tritongrader.runner")
 
 class CommandRunner:
     DEFAULT_TIMEOUT = 1.0
-    QEMU_ARM = "qemu-arm-static -L /usr/arm-linux-gnueabihf/ "
+    WRAPPER = "runuser -u student -- "
 
     def __init__(
         self,
@@ -26,10 +26,7 @@ class CommandRunner:
         """
         - timeout: timeout in seconds.
         """
-        if arm:
-            self.command = CommandRunner.QEMU_ARM + command
-        else:
-            self.command = command
+        self.command = CommandRunner.WRAPPER + command
 
         self.capture_output = capture_output or print_output
         self.print_command = print_command
