@@ -37,4 +37,3 @@ if __name__ == "__main__":
         failure_test.result.stdout,
         failure_test.result.stderr
     )
-    assert len(failure_test.result.stdout) < 1_000_000

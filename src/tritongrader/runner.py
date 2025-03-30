@@ -12,6 +12,7 @@ logger = logging.getLogger("tritongrader.runner")
 class CommandRunner:
     DEFAULT_TIMEOUT = 1.0
     WRAPPER = "runuser -u student -- "
+    TOOBIG_THRESHOLD = 16_000_000
 
     def __init__(
         self,
@@ -71,7 +72,7 @@ class CommandRunner:
         if file_a_size != file_b_size:
             return False # skip checking contents if lengths differ
         with open(file_a, "rb") as a, open(file_b, "rb") as b:
-            if file_a_size <= 20000000:
+            if file_a_size <= CommandRunner.TOOBIG_THRESHOLD:
                 # safe to check directly (hard coded upper bound)
                 return a.read() == b.read()
             # else do chunked reads
@@ -102,7 +103,7 @@ class CommandRunner:
             try:
                 if os.path.getsize(
                     self.stdout_tf
-                ) > 20000000:  #hard coded big number, maybe parametrize this
+                ) > CommandRunner.TOOBIG_THRESHOLD:
                     msg = "stdout is too large to read, you may have an infinite loop in your code. " \
                            "Here are the first 4096 bytes of stdout:\n"
                     pos = 0
@@ -126,7 +127,7 @@ class CommandRunner:
             try:
                 if os.path.getsize(
                     self.stderr_tf
-                ) > 20000000:  #hard coded big number, maybe parametrize this
+                ) > CommandRunner.TOOBIG_THRESHOLD:
                     msg = "stderr is too large to read, you may have an infinite loop in your code. " \
                            "Here are the first 4096 bytes of stderr:\n"
                     pos = 0
