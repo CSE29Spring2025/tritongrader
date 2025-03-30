@@ -1,5 +1,4 @@
 import pprint
-
 from tritongrader.autograder import Autograder  # noqa
 from tritongrader.formatter import GradescopeResultsFormatter
 from tritongrader.test_case import BasicTestCase  # noqa
@@ -11,7 +10,7 @@ if __name__ == "__main__":
         "/autograder/source/tests/",
         required_files=["submission.c"],
         verbose_rubric=True,
-        build_command="pwd && gcc -Wall -Werror -o submission submission.c",
+        build_command="gcc -Wall -Werror -o submission submission.c",
         compile_points=1,
     )
     

@@ -1,18 +1,15 @@
 # tritongrader (CSE 29 Fork)
 
-A lightweight Python library for handling basic I/O-based grading for
-programming assignments in CSE 29, which are written in C and compiled in an x86
-environment.
+A lightweight Python library for handling unit and integration testing for
+grading programming assignments in CSE 29, which are written in C and compiled
+in an x86 environment.
 
 ## Additions compared to upstream (WIP)
 
 - Secured environment for running student code
-  - No file access in `/autograder` outside `/autograder/submission`
-  - ~~No network access~~
+  - No file access in `/autograder`
   - Execution as a deprivileged `student` user rather than `root`
 - Student-friendly messages for problems
-  - Compiler errors
-  - Linker errors
   - Termination due to a signal
     - Interrupted (SIGINT)
     - Segmentation fault (SIGSEGV)

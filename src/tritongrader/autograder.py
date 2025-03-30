@@ -13,6 +13,7 @@ from tritongrader.test_case import (
     CustomTestCase,
     CustomTestResult,
 )
+from tritongrader.test_case.static_analysis_test_case import HeaderCheckTestCase
 
 logger = logging.getLogger("tritongrader.autograder")
 
@@ -30,9 +31,11 @@ class Autograder:
         submission_path: str,
         tests_path: str,
         required_files: List[str] = [],
+        source_files: List[str] = [],
         supplied_files: List[str] = [],
         verbose_rubric: bool = False,
         build_command: str = None,
+        banned_includes: set[str] = set(), # Example: {"stdlib.h", "string.h"}
         compile_points: int = 0,
         missing_files_check: bool = True,
     ):
@@ -69,6 +72,11 @@ class Autograder:
                 build_command, compile_points
             )
             self.add_test(self.build_test_case)
+        
+        self.include_check_test_case = None
+        if banned_includes and source_files:
+            self.include_check_test_case = HeaderCheckTestCase(source_files, banned_includes)
+            self.add_test(self.include_check_test_case)
 
     def create_missing_files_check_test_case(
         self, required_files: List[str]
@@ -98,7 +106,7 @@ class Autograder:
             point_value=point_value,
             expected_retcode=0,
             # Compiler should not have root perms.
-            # Imagine #include </autograder/run_autograder>
+            # Imagine #include "/autograder/run_autograder"
             student=True,
             timeout=3,
         )
@@ -198,6 +206,10 @@ class Autograder:
 
             if test == self.build_test_case and not test.result.passed:
                 logger.info("Failed to compile. Aborting autograder.")
+                break
+            
+            if test == self.include_check_test_case and not test.result.passed:
+                logger.info("Banned headers have been included. Aborting autograder.")
                 break
 
     def execute(self):

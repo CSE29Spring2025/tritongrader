@@ -4,15 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tritongrader"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Jerry Yu" },
+  { name="Michael Peng" },
 ]
 description = "A lightweight Python package for building autograders."
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.7"
-calssifiers = [
+classifiers = [
     "Programming Language :: Python :: 3",
     "License :: MIT License",
     "Operating System :: OS Independent",
@@ -20,5 +21,4 @@ calssifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/jyu283/gradescope.py"
-
+"Homepage" = "https://github.com/CSE29Spring2025/tritongrader"
