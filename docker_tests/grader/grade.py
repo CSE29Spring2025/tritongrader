@@ -1,3 +1,4 @@
+import pprint
 
 from tritongrader.autograder import Autograder  # noqa
 from tritongrader.formatter import GradescopeResultsFormatter  # noqa
@@ -30,4 +31,4 @@ if __name__ == "__main__":
         html_diff=True,
     )
 
-    formatter.export()
+    pprint.pprint(formatter.execute())

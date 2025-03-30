@@ -22,6 +22,7 @@ jobs:
       run: |
         cd docker_tests
         docker build -t graderimage .
+        cd ..
     - name: Run security tests
       run: |
-        docker run --rm -v $(pwd)/tests/${{ matrix.test }}:/autograder/submission -l sectest graderimage
+        docker run --rm -v $(pwd)/docker_tests/tests/${{ matrix.test }}:/autograder/submission -l sectest graderimage
