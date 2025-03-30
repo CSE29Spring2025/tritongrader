@@ -98,13 +98,14 @@ class Autograder:
             point_value=point_value,
             expected_retcode=0,
             # Compiler should not have root perms.
-            # Imagine #include <../run_autograder>
+            # Imagine #include </autograder/run_autograder>
             student=True,
             timeout=3,
         )
 
     def create_sandbox_directory(self) -> str:
         tmpdir = TemporaryDirectory(prefix="Autograder_")
+        shutil.chown(tmpdir.name, "student")  # Assumes student user exists
         logger.info(f"Sandbox created at {tmpdir.name}")
         return tmpdir
 

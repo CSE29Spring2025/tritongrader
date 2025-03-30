@@ -1,7 +1,5 @@
 #!/bin/bash
 
-chown -R student /autograder/submission
-chmod -R u+rw /autograder/submission/*
 mkfifo error-pipe
 tee -a error.log < error-pipe >&2 &
 python3 /autograder/source/grade.py 2> error-pipe
