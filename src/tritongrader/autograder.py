@@ -97,7 +97,9 @@ class Autograder:
             name="Compiling",
             point_value=point_value,
             expected_retcode=0,
-            student=False,  # Compiler needs root perms
+            # Compiler should not have root perms.
+            # Imagine #include <../run_autograder>
+            student=True,
             timeout=3,
         )
 
