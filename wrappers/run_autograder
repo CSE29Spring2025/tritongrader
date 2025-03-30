@@ -1,7 +1,3 @@
 #!/bin/sh
-source/start
 chmod +x source/first-stage
-mkfifo error-pipe
-tee -a error.log < error-pipe >&2 &
-source/first-stage 2> error-pipe
-source/end $?
+source/first-stage

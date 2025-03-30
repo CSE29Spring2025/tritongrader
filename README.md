@@ -20,12 +20,11 @@ in an x86 environment.
     - Killed (SIGKILL)
     - Terminated (SIGTERM)
   - Memory leaks (Valgrind, if enabled)
-  - Non-zero return code
-  - Unexpected stderr output
 - Options for restricting `#include` headers
 - Check for expected function definitions
 - Detection of whitespace-only discrepancies and visualization of them
 - Tests to verify most of the above
+  - Flexible CI framework for end-to-end autograder tests for each PA
 - Removal of DuckDuckWhale telemetry
 
 ## Installation

@@ -5,4 +5,6 @@ apt upgrade -y
 apt install -y python3-zstd build-essential
 adduser student --no-create-home --disabled-password --gecos ""
 chmod -R o= /autograder
+pip3 install --upgrade pip wheel
+pip3 install --force-reinstall -r /autograder/source/requirements.txt
 # TODO perform any other setup, if necessary
