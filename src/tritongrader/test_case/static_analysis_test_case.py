@@ -65,7 +65,7 @@ class StaticAnalysisTestCase(TestCaseBase):
             self.result.error = True
         else:
             try:
-                self.evaluator(self.result.stdout)
+                self.evaluator(self.runner.stdout)
                 self.result.passed = True
                 self.result.error = False
             except Exception as failure:
@@ -101,6 +101,7 @@ class HeaderCheckTestCase(StaticAnalysisTestCase):
         )
 
     def _evaluate(self, gcc_stdout: str):
+        logger.info("Header dependencies: %s", gcc_stdout)
         for header in self.prohibited_headers:
             if f"/usr/include/{header}" in gcc_stdout:
                 raise ValueError(f"You have included {header}, which is not allowed for this assignment.")
