@@ -29,7 +29,6 @@ if __name__ == "__main__":
         verbose_rubric=True,
         build_command="gcc -o palindrome palindrome.c",
         compile_points=1,
-        arm=False,
     )
 
     def test_num_lines(result: CustomTestResult):
@@ -54,7 +53,6 @@ if __name__ == "__main__":
         'echo "Hello World"',
         name="Hello world!",
         point_value=5,
-        arm=False,
     )
 
     ag.add_test(basic_test)

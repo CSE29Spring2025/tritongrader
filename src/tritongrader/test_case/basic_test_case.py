@@ -28,13 +28,17 @@ class BasicTestCase(TestCaseBase):
         point_value: float = 1,
         expected_retcode: int = 0,
         timeout: float = TestCaseBase.DEFAULT_TIMEOUT,
-        arm: bool = False,
+        student: bool = True,
         binary_io: bool = False,
         hidden: bool = False,
     ):
+        """Create a basic test case.
+        
+        :param student: Whether the test should run as the "student" user.
+        """
         super().__init__(name, point_value, timeout, hidden)
 
-        self.arm: bool = arm
+        self.student: bool = student
         self.binary_io: bool = binary_io
 
         self.command: str = command
@@ -49,7 +53,7 @@ class BasicTestCase(TestCaseBase):
             command=self.command,
             capture_output=True,
             timeout=self.timeout,
-            arm=self.arm,
+            student=self.student,
         )
         self.runner.run()
         self.result.passed = self.runner.exit_status == self.expected_retcode

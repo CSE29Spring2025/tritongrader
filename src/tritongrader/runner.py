@@ -21,19 +21,22 @@ class CommandRunner:
         print_output: bool = False,
         timeout: float = DEFAULT_TIMEOUT,
         text: bool = True,
-        arm: bool = False,
+        student: bool = False,
     ):
         """
         - timeout: timeout in seconds.
         """
-        self.command = CommandRunner.WRAPPER + command
+        if student:
+            self.command = CommandRunner.WRAPPER + command
+        else:
+            self.command = command
 
         self.capture_output = capture_output or print_output
         self.print_command = print_command
         self.print_output = print_output
         self.timeout = timeout
         self.text = text
-        self.arm = arm
+        self.student = student
         self.stdout_tf: Optional[str] = None
         self.stderr_tf: Optional[str] = None
         self.running_time: float = 0
