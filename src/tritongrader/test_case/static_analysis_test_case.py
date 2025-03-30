@@ -57,19 +57,21 @@ class StaticAnalysisTestCase(TestCaseBase):
             student=self.student,
         )
         self.runner.run()
-        if self.runner.exit_status != 0:
-            self.result.passed = False
-            self.result.error = True
         self.result.retcode = self.runner.exit_status
         self.result.running_time = self.runner.running_time
         self.result.stderr = self.runner.stderr
-        try:
-            self.evaluator(self.result.stdout)
-            self.result.passed = True
-            self.result.error = False
-        except Exception as failure:
+        if self.runner.exit_status != 0:
             self.result.passed = False
-            self.result.stderr = str(failure.args)
+            self.result.error = True
+        else:
+            try:
+                self.evaluator(self.result.stdout)
+                self.result.passed = True
+                self.result.error = False
+            except Exception as failure:
+                self.result.passed = False
+                self.result.evaluation_error = failure
+                self.result.stderr = str(failure.args)
 
     def execute(self):
         self.result = StaticAnalysisTestResult()
@@ -84,7 +86,7 @@ class HeaderCheckTestCase(StaticAnalysisTestCase):
     """A specialization of a static analysis test case that checks whether
     disallowed headers have been included.
     """
-    LIST_DEPS_PREFIX = "gcc -M "
+    LIST_DEPS_PREFIX = "gcc -M"
 
     def __init__(self, source_files: list[str], prohibited_headers: set[str]):
         assert source_files, "HeaderCheck is checking no files!"

@@ -18,8 +18,8 @@ class ResultsFormatterBase:
         self.formatters: Dict[TestCaseBase, Callable[[TestCaseBase], None]] = {
             IOTestCase: self.format_io_test,
             BasicTestCase: self.format_basic_test,
-            StaticAnalysisTestCase: self.format_basic_test,
-            HeaderCheckTestCase: self.format_basic_test,  # TODO make more specific
+            StaticAnalysisTestCase: self.format_static_analysis,
+            HeaderCheckTestCase: self.format_static_analysis,  # TODO make more specific
             CustomTestCase: self.format_custom_test,
         }
         self.test_cases: List[TestCaseBase] = []
@@ -28,13 +28,16 @@ class ResultsFormatterBase:
             self.test_cases.extend(autograder.test_cases)
 
     def format_io_test(self, test: IOTestCase):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def format_basic_test(self, test: BasicTestCase):
-        raise NotImplementedError
+        raise NotImplementedError()
+
+    def format_static_analysis(self, test: StaticAnalysisTestCase):
+        raise NotImplementedError()
 
     def format_custom_test(self, test: CustomTestCase):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def format_test(self, test: TestCaseBase):
         return self.formatters[type(test)](test)
@@ -205,6 +208,32 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                     test.runner.stderr,
                 ]
             )
+        return {
+            "output": "\n".join(summary)
+        }
+
+    def format_static_analysis(self, test: StaticAnalysisTestCase):
+        if not test.result.has_run:
+            return {
+                "output": "This test was not run."
+            }
+        summary = []
+        if test.result.passed:
+            summary.append("Test passed!")
+        elif test.result.error:
+            summary.extend([
+                "Test ERRORED",
+                "=== stderr ===",
+                test.result.stderr,
+                "",
+                f"Return code: {test.result.retcode}",
+            ])
+        else:
+            summary.extend([
+                "Test FAILED",
+                test.result.evaluation_error.args[0]
+                    if test.result.evaluation_error else test.result.stderr,
+            ])
         return {
             "output": "\n".join(summary)
         }
