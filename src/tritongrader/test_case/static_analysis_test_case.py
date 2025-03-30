@@ -101,7 +101,7 @@ class HeaderCheckTestCase(StaticAnalysisTestCase):
         )
 
     def _evaluate(self, gcc_stdout: str):
-        logger.info("Header dependencies: %s", gcc_stdout)
+        logger.info("Checking for banned header includes...")
         for header in self.prohibited_headers:
             if f"/usr/include/{header}" in gcc_stdout:
                 raise ValueError(f"You have included {header}, which is not allowed for this assignment.")
