@@ -1,0 +1,4 @@
+#!/bin/bash
+
+python3 /autograder/source/grade.py
+python3 /autograder/source/validate.py

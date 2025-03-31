@@ -1,0 +1,23 @@
+name: End-to-end tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Autograder image
+      run: |
+        cd e2e
+        docker build -t e2egrader .
+        cd ..
+    - name: Run tests
+      run: |
+        cd e2e
+        ./run_all_cases.sh

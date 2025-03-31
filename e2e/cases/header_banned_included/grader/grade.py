@@ -1,4 +1,3 @@
-import pprint
 from tritongrader.autograder import Autograder  # noqa
 from tritongrader.formatter import GradescopeResultsFormatter
 from tritongrader.test_case import BasicTestCase  # noqa
@@ -14,9 +13,11 @@ if __name__ == "__main__":
         verbose_rubric=True,
         build_command="gcc -Wall -Werror -o submission submission.c",
     )
-    
+
+    ag.add_test(BasicTestCase("./submission"))
+
     ag.execute()
-    
+
     formatter = GradescopeResultsFormatter(
         src=ag,
         message="tritongrader test",
@@ -24,6 +25,4 @@ if __name__ == "__main__":
         html_diff=True,
     )
 
-    pprint.pprint(formatter.execute())
-
-    assert not ag.include_check_test_case.result.passed
+    formatter.export()
