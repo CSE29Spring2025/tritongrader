@@ -11,7 +11,7 @@ logger = logging.getLogger("tritongrader.runner")
 
 class CommandRunner:
     DEFAULT_TIMEOUT = 1.0
-    WRAPPER = "/autograder/source/harness.py "
+    WRAPPER = "runuser -u student -- "
     TOOBIG_THRESHOLD = 16_000_000
 
     def __init__(
