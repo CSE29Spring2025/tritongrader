@@ -49,8 +49,6 @@ class IOTestCase(TestCaseBase):
         self.binary_io: bool = binary_io
 
         self.command_path: str = command_path
-        self.command: str = ""
-
         self.input_path: str = input_path if os.path.exists(input_path) else None
         self.exp_stdout_path: str = exp_stdout_path
         self.exp_stderr_path: str = exp_stderr_path
@@ -64,7 +62,7 @@ class IOTestCase(TestCaseBase):
 
     def __str__(self):
         return (
-            f"{self.name} student={self.student} cmd_path={self.command_path} cmd={self.command} " +
+            f"{self.name} student={self.student} cmd={self.command_path} " +
             f"input_path={self.input_path} exp_stdout_path={self.exp_stdout_path} exp_stderr_path={self.exp_stderr_path}"
         )
 
@@ -98,12 +96,6 @@ class IOTestCase(TestCaseBase):
             raise Exception("no runner initialized")
         return self.runner.stderr
 
-    def extract_command_from_bash_file(self, bash_file_path):
-        # Command files cannot be binary. Can use "r" mode directly here.
-        with open(bash_file_path, "r") as cmd_fp:
-            test_command = cmd_fp.read().split("\n")[1]
-        return test_command
-
     @property
     def test_input(self):
         if not self.input_path:
@@ -115,7 +107,6 @@ class IOTestCase(TestCaseBase):
             return fp.read()
 
     def get_execute_command(self):
-        self.command = self.extract_command_from_bash_file(self.command_path)
         logger.info(f"Running {str(self)}")
         exe = self.command_path
         if self.input_path:

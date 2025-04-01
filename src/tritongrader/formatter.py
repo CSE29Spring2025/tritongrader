@@ -155,7 +155,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         summary.append(f"{status_str} in {test.runner.running_time:.2f} ms.")
 
         if self.verbose:
-            summary.extend(["=== test command ===", test.command])
+            summary.extend(["=== test command ===", test.command_path])
 
             if test.test_input is not None:
                 summary.extend(["=== test input ===", test.test_input])
