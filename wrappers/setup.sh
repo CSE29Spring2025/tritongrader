@@ -7,4 +7,5 @@ adduser student --no-create-home --disabled-password --gecos ""
 chmod -R o= /autograder
 pip3 install --upgrade pip wheel
 pip3 install --force-reinstall -r /autograder/source/requirements.txt
+chmod +x /autograder/source/harness.py
 # TODO perform any other setup, if necessary
