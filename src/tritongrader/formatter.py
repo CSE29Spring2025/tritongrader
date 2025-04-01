@@ -99,6 +99,16 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             fromdesc="Your stderr",
             todesc="Expected stderr",
         )
+        valgrind_html = ""
+        if test.result.valparse_out:
+            val = test.result.valparse_out
+            errors = val.errs + val.leaks
+            if errors:
+                valgrind_html += "<h2>valgrind errors/leaks</h2><ul>"
+                for err in errors:
+                    valgrind_html += f"<li><pre>{str(err)}</pre></li>"
+                valgrind_html += "</ul>"
+
         html = "".join(
             [
                 "<div>",
@@ -110,6 +120,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                 "<hr>",
                 "<h2>stderr</h2>",
                 stderr_diff,
+                valgrind_html,
                 "</div>",
             ]
         )

@@ -697,8 +697,8 @@ class Parser:
             raise ValgrindFormatError("No args tag.")
         self.args = Arguments.from_xml_element(args)
 
-        self.errs = []
-        self.leaks = []
+        self.errs: list[ValgrindError] = []
+        self.leaks: list[ValgrindError] = []
 
         for el in root.findall('error'):
             curr = ValgrindError.from_xml_element(el)
