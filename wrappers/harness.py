@@ -17,6 +17,7 @@ for network in [socket.AF_INET, socket.AF_INET6]:
 filter.load()
 
 # Restrict file access and superuser privileges
-os.setuid(1000)  # We assume 1000 is "student"
+os.setresuid(1000, 1000, 1000)  # We assume 1000 is "student"
+os.setresgid(1000, 1000, 1000)
 
 os.execvp(sys.argv[1], sys.argv[1:])
