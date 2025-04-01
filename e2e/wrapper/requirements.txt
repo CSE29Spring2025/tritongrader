@@ -1,1 +1,2 @@
 tritongrader @ git+https://github.com/CSE29Spring2025/tritongrader.git
+pyseccomp==0.1.2

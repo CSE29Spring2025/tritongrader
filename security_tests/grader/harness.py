@@ -19,4 +19,4 @@ filter.load()
 # Restrict file access and superuser privileges
 os.setuid(1000)  # We assume 1000 is "student"
 
-os.execv(sys.argv[1], sys.argv[1:])
+os.execvp(sys.argv[1], sys.argv[1:])
