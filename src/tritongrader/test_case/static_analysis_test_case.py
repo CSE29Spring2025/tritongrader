@@ -62,7 +62,6 @@ class StaticAnalysisTestCase(TestCaseBase):
         self.result.stderr = self.runner.stderr
         if self.runner.exit_status != 0:
             self.result.passed = False
-            self.result.error = True
         else:
             try:
                 self.evaluator(self.runner.stdout)

@@ -120,7 +120,6 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             return "This test was not run."
 
         if test.result.error:
-            # TODO report to Observer
             return "\n".join(
                 [
                     "=== Unexpected autograder runtime error!  Please notify your instructors. ===",
@@ -141,7 +140,17 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                 ]
             )
 
-        status_str = "PASSED" if test.result.passed else "FAILED"
+        if test.result.valparse_out is None:
+            status_str = "PASSED" if test.result.passed else "FAILED"
+        elif not test.result.output_correct:
+            status_str = "FAILED"
+        elif test.result.valparse_out.hasErrors() or\
+              test.result.valparse_out.hasLeaks() or\
+              test.result.valparse_out.hasFatalSignal():
+            status_str = "FAILED (output correct, but memory errors detected)"
+        else:
+            status_str = "PASSED"
+
         summary = []
         summary.append(f"{status_str} in {test.runner.running_time:.2f} ms.")
 
@@ -171,6 +180,13 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                         str(test.exit_status),
                     ]
                 )
+                if test.result.valparse_out:
+                    summary.extend(
+                        [
+                            "=== valgrind results ===",
+                            test.result.valparse_out.errs
+                        ]
+                    )
 
         return "\n".join(summary)
 

@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 
 from tritongrader.test_case.test_case_base import TestCaseBase, TestResultBase
 from tritongrader.runner import CommandRunner
+from tritongrader.valparse import valparse
 
 logger = logging.getLogger("tritongrader.test_case.io_test_case")
 
@@ -17,6 +18,8 @@ class IOTestResult(TestResultBase):
         self.exit_status: Optional[int] = None
         self.stderr: str = ""
         self.stdout: str = ""
+        self.valparse_out: Optional[valparse.Parser] = None
+        self.output_correct: bool = False
 
 
 class IOTestCase(TestCaseBase):
@@ -29,15 +32,18 @@ class IOTestCase(TestCaseBase):
         exp_exit_status: Optional[int],
         name: str = "Test Case",
         point_value: float = 1,
+        valgrind_point_value: float = 0,
         timeout: float = TestCaseBase.DEFAULT_TIMEOUT,
         student: bool = True,
         binary_io: bool = False,
         hidden: bool = False,
     ):
         """
-        - timeout: timeout in seconds.
+        :param float timeout: Timeout in seconds.
+        :param float valgrind_point_value: Points given in addition to `point_value`
+            for having no memory problems. If set to 0, don't run Valgrind.
         """
-        super().__init__(name, point_value, timeout, hidden)
+        super().__init__(name, point_value + valgrind_point_value, timeout, hidden)
 
         self.student: bool = student
         self.binary_io: bool = binary_io
@@ -50,13 +56,15 @@ class IOTestCase(TestCaseBase):
         self.exp_stderr_path: str = exp_stderr_path
         self.exp_exit_status: Optional[int] = exp_exit_status
 
+        self.point_value_correct_out = point_value
+        self.point_value_valgrind = valgrind_point_value
+
         self.result: IOTestResult = IOTestResult()
         self.runner: CommandRunner = None
 
     def __str__(self):
         return (
-            f"{self.name} student={self.student} cmd_path={self.command_path} cmd={self.command} "
-            +
+            f"{self.name} student={self.student} cmd_path={self.command_path} cmd={self.command} " +
             f"input_path={self.input_path} exp_stdout_path={self.exp_stdout_path} exp_stderr_path={self.exp_stderr_path}"
         )
 
@@ -109,11 +117,11 @@ class IOTestCase(TestCaseBase):
     def get_execute_command(self):
         self.command = self.extract_command_from_bash_file(self.command_path)
         logger.info(f"Running {str(self)}")
-        # if running in an ARM simulator, we cannot use the bash script
-        # and must instead use the command inside directly.
         exe = self.command_path
         if self.input_path:
             exe += f" < {self.input_path}"
+        if self.point_value_valgrind > 0:
+            exe = "valgrind --leak-check=full -s --track-origins=yes --xml=yes --xml-file=ValgrindResult.xml " + exe
         return exe
 
     def execute(self):
@@ -135,21 +143,38 @@ class IOTestCase(TestCaseBase):
 
             stdout_check = self.runner.check_stdout(self.exp_stdout_path)
             stderr_check = self.runner.check_stderr(self.exp_stderr_path)
+            valgrind_check = True if self.point_value_valgrind == 0 else self.check_valgrind_result()
             status = True
             if self.exp_exit_status is not None:
                 status = self.exp_exit_status == self.runner.exit_status
-            # TODO self.result.exit_status
             self.exit_status: int = self.runner.exit_status
-            self.result.passed = stdout_check and stderr_check and status
-            self.result.score = self.point_value if self.result.passed else 0
+            self.result.exit_status = self.exit_status
+            self.result.output_correct = stdout_check and stderr_check and status
+            self.result.passed = self.result.output_correct and valgrind_check
+            self.result.score = 0
+            if self.result.output_correct:
+                self.result.score += self.point_value_correct_out
+            if self.result.passed:
+                self.result.score += self.point_value_valgrind
 
-            # TODO report to students
             print(
-                f"stdout check: {stdout_check}; stderr check: {stderr_check}; status: {status}"
+                f"stdout check: {stdout_check}; stderr check: {stderr_check}; status: {status}; " +
+                (f"valgrind check: {valgrind_check}" if self.point_value_valgrind else "")
             )
         except subprocess.TimeoutExpired:
             logger.info(f"{self.name} timed out (limit={self.timeout}s)!")
             self.result.timed_out = True
+
+    def check_valgrind_result(self):
+        try:
+            self.result.valparse_out = valparse.Parser("ValgrindResult.xml")
+            return not (self.result.valparse_out.hasErrors() or\
+                    self.result.valparse_out.hasLeaks() or\
+                    self.result.valparse_out.hasFatalSignal())
+        except Exception as e:
+            self.result.error = True
+            print(e)
+            return False
 
 
 class IOTestCaseBulkLoader:
@@ -192,6 +217,7 @@ class IOTestCaseBulkLoader:
         self,
         name: str,
         point_value: float = 1,
+        valgrind_point_value: float = 0,
         hidden: bool = False,
         timeout: float = None,
         binary_io: bool = False,
@@ -225,6 +251,7 @@ class IOTestCaseBulkLoader:
         test_case = IOTestCase(
             name=f"{test_name}",
             point_value=point_value,
+            valgrind_point_value=valgrind_point_value,
             command_path=cmd,
             input_path=stdin,
             exp_stdout_path=stdout,
@@ -242,13 +269,19 @@ class IOTestCaseBulkLoader:
 
     def add_list(
         self,
-        test_list: Tuple[str, float],
+        test_list: list[tuple[str, float] | tuple[str, float, float]],
         prefix: str = "",
         hidden: bool = False,
         timeout: float = None,
         binary_io: bool = False,
     ):
-        for name, point_value in test_list:
-            self.add(name, point_value, hidden, timeout, binary_io, prefix=prefix)
+        for test in test_list:
+            if len(test) == 2:
+                self.add(test[0], test[1], hidden, timeout, binary_io, prefix=prefix)
+            elif len(test) == 3:
+                self.add(test[0], test[1], hidden, timeout, binary_io, prefix=prefix,
+                         valgrind_point_value=test[2])
+            else:
+                raise ValueError(test)
 
         return self
