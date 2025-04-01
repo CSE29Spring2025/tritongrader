@@ -181,12 +181,14 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                     ]
                 )
                 if test.result.valparse_out:
-                    summary.extend(
-                        [
-                            "=== valgrind results ===",
-                            test.result.valparse_out.errs
-                        ]
-                    )
+                    summary.append("=== valgrind ===")
+                    summary.append("valgrind errors:")
+                    summary.extend(map(str, test.result.valparse_out.errs))
+                    summary.append("valgrind leaks:")
+                    summary.extend(map(str, test.result.valparse_out.leaks))
+                    if test.result.valparse_out.hasFatalSignal():
+                        summary.append("valgrind fatal signal:")
+                        summary.append(str(test.result.valparse_out.signal))
 
         return "\n".join(summary)
 
