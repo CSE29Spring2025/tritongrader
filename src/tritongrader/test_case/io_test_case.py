@@ -268,10 +268,9 @@ class IOTestCaseBulkLoader:
     ):
         for test in test_list:
             if len(test) == 2:
-                self.add(test[0], test[1], hidden, timeout, binary_io, prefix=prefix)
+                self.add(test[0], test[1], 0, hidden, timeout, binary_io, prefix=prefix)
             elif len(test) == 3:
-                self.add(test[0], test[1], hidden, timeout, binary_io, prefix=prefix,
-                         valgrind_point_value=test[2])
+                self.add(test[0], test[1], test[2], hidden, timeout, binary_io, prefix=prefix)
             else:
                 raise ValueError(test)
 
