@@ -1,4 +1,5 @@
 import os
+import shutil
 import traceback
 import logging
 import subprocess
@@ -109,6 +110,11 @@ class IOTestCase(TestCaseBase):
     def get_execute_command(self):
         logger.info(f"Running {str(self)}")
         exe = self.command_path
+        shutil.copy2(exe, "./__runtest")
+        shutil.chown("./__runtest", "student")
+        exe = "./__runtest"
+        os.chmod(exe, 500)
+
         if self.input_path:
             exe += f" < {self.input_path}"
         if self.point_value_valgrind > 0:
