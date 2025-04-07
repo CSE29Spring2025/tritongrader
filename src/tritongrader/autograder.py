@@ -1,5 +1,6 @@
 import os
 import logging
+import pathlib
 import shutil
 import platform
 
@@ -193,9 +194,15 @@ class Autograder:
         for f in self.supplied_files:
             self.copy2sandbox(self.tests_path, f)
 
+    def give_student_perms(self):
+        """Give the student account ownership of all the copied files."""
+        for path in pathlib.Path(self.sandbox.name).glob("*"):
+            shutil.chown(path, "student")
+
     def _execute(self):
         self.copy_submission_files()
         self.copy_supplied_files()
+        self.give_student_perms()
 
         for test in self.test_cases:
             test.execute()
