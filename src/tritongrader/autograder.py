@@ -39,6 +39,7 @@ class Autograder:
         banned_includes: set[str] = set(), # Example: {"stdlib.h", "string.h"}
         compile_points: int = 0,
         missing_files_check: bool = True,
+        compile_timeout: int = 3,
     ):
         """
         Note: `build_command` must be given for compilation to happen; there is not implicit build
@@ -54,6 +55,7 @@ class Autograder:
         self.supplied_files = supplied_files
         self.verbose_rubric = verbose_rubric
         self.compile_points = compile_points
+        self.compile_timeout = compile_timeout
 
         self.test_cases: List[TestCaseBase] = []
 
@@ -109,7 +111,7 @@ class Autograder:
             # Compiler should not have root perms.
             # Imagine #include "/autograder/run_autograder"
             student=True,
-            timeout=3,
+            timeout=self.compile_timeout,
         )
 
     def create_sandbox_directory(self) -> str:
