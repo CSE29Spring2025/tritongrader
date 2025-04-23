@@ -109,10 +109,8 @@ class IOTestCase(TestCaseBase):
     def get_execute_command(self):
         logger.info(f"Running {str(self)}")
         exe = self.command_path
-        shutil.copy2(exe, "./__runtest")
-        shutil.chown("./__runtest", "student")
-        exe = "./__runtest"
-        os.chmod(exe, 500)
+        with open(exe, "r") as script_file:
+            exe = script_file.read().strip()
 
         if self.input_path:
             exe += f" < {self.input_path}"
