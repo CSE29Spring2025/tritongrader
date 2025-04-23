@@ -83,7 +83,18 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             fromdesc=fromdesc,
             todesc=todesc,
             context=False,
-        )
+        ) + """<style>tbody > tr:nth-child(n+2) > .diff_next:has(a) ~ td ~ td {
+            font-weight: 800;
+            background-color: #cfcfcf;
+        }
+        .diff_header {
+            padding-right: 4px;
+            color: #444444 !important;
+            border-right: 1px solid #444444 !important;
+        }
+        .diff tr td:nth-child(3n) {
+            padding-left: 4px;
+        }</style>"""
 
     def generate_html_diff(self, test: IOTestCase):
         stdout_diff = self.html_diff_make_table(
