@@ -82,8 +82,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             tolines=totext.split("\n"),
             fromdesc=fromdesc,
             todesc=todesc,
-            context=True,
-            numlines=3,
+            context=False,
         )
 
     def generate_html_diff(self, test: IOTestCase):

@@ -1,10 +1,9 @@
 import os
 import shutil
-import traceback
 import logging
 import subprocess
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from tritongrader.test_case.test_case_base import TestCaseBase, TestResultBase
 from tritongrader.runner import CommandRunner
