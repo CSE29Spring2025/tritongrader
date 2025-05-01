@@ -97,6 +97,9 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         }</style>"""
 
     def generate_html_diff(self, test: IOTestCase):
+        if not test.result.has_run or not test.runner:
+            return "<i>This test was not run.</i>"
+
         stdout_diff = self.html_diff_make_table(
             fromtext=test.actual_stdout or "",
             totext=test.expected_stdout or "",
