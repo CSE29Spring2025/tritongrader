@@ -12,7 +12,7 @@ logger = logging.getLogger("tritongrader.runner")
 class CommandRunner:
     DEFAULT_TIMEOUT = 1.0
     WRAPPER = "runuser -u student -- "
-    TOOBIG_THRESHOLD = 16_000_000
+    TOOBIG_THRESHOLD = 1_000_000
 
     def __init__(
         self,
@@ -101,6 +101,8 @@ class CommandRunner:
             raise Exception("stdout was not captured")
         with open(self.stdout_tf, self.read_mode) as fp:
             try:
+                size = os.path.getsize(self.stdout_tf)
+                logger.info("stdout (%s) has size %d bytes", self.stdout_tf, size)
                 if os.path.getsize(
                     self.stdout_tf
                 ) > CommandRunner.TOOBIG_THRESHOLD:
