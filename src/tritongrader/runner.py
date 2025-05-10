@@ -101,8 +101,6 @@ class CommandRunner:
             raise Exception("stdout was not captured")
         with open(self.stdout_tf, self.read_mode) as fp:
             try:
-                size = os.path.getsize(self.stdout_tf)
-                logger.info("stdout (%s) has size %d bytes", self.stdout_tf, size)
                 if os.path.getsize(
                     self.stdout_tf
                 ) > CommandRunner.TOOBIG_THRESHOLD:

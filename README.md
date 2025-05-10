@@ -181,7 +181,7 @@ formatter = GradescopeResultsFormatter(
     src=ag,
     message="tritongrader test",
     hidden_tests_setting="after_published",
-    html_diff=True,
+    diff_format="ansi",
 )
 
 formatter.execute()

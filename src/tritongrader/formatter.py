@@ -1,5 +1,6 @@
 import json
 import logging
+import subprocess
 from typing import Dict, Callable, List, Union, Iterable
 from difflib import HtmlDiff
 from tritongrader import Autograder
@@ -57,7 +58,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         hide_points: bool = False,
         max_output_bytes: int = 5000,
         verbose: bool = True,
-        html_diff: bool = False,
+        diff_format: str = "plain", # or "color" or "html"
     ):
         super().__init__(src)
         self.message = message
@@ -67,7 +68,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         self.hide_points: bool = hide_points
         self.max_output_bytes: int = max_output_bytes
         self.verbose: bool = verbose
-        self.html_diff: bool = html_diff
+        self.diff_format = diff_format
         self.results: dict = None
 
     def html_diff_make_table(
@@ -99,6 +100,8 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
     def generate_html_diff(self, test: IOTestCase):
         if not test.result.has_run or not test.runner:
             return "<i>This test was not run.</i>"
+        elif test.result.timed_out:
+            return f"<i>Test case timed out with limit = {test.timeout}.</i>"
 
         stdout_diff = self.html_diff_make_table(
             fromtext=test.actual_stdout or "",
@@ -139,6 +142,74 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         )
         return html
 
+    def generate_ansi_diff(self, test: IOTestCase):
+        lines = []
+        if not test.result.has_run or not test.runner:
+            return "This test was not run."
+        elif test.result.timed_out:
+            lines.append("Test case timed out with limit = {test.timeout}.")
+            lines.append("")
+        
+        lines.append("Test status: " + self._test_status(test))
+
+        if test.result.passed:
+            lines += ["", test.expected_stdout]
+            return "\n".join(lines)
+
+        diff_proc = subprocess.Popen([
+            "icdiff", "--head=1000", "-N", "-W", "-s", "--cols=120",
+            "-L", "Your output (stdout)", "-L", "Expected output (stdout)",
+            test.runner.stdout_tf, test.exp_stdout_path,
+        ], stdout=subprocess.PIPE, shell=False)
+
+        diff_proc_2 = subprocess.Popen([
+            "icdiff", "--head=1000", "-N", "-W", "-s", "--cols=120",
+            "-L", "Your output (stderr)", "-L", "Expected output (stderr)",
+            test.runner.stderr_tf, test.exp_stderr_path,
+        ], stdout=subprocess.PIPE, shell=False)
+
+        try:
+            diff_proc.wait(timeout=2)
+        except Exception as e:
+            print("icdiff crashed!")
+            print(e)
+            return self.basic_io_output(test)
+        lines += ["", diff_proc.stdout.read().decode()]
+
+        try:
+            diff_proc_2.wait(timeout=2)
+        except Exception as e:
+            print("icdiff crashed!")
+            print(e)
+            return self.basic_io_output(test)
+        lines += ["", diff_proc_2.stdout.read().decode()]
+
+        if test.result.valparse_out:
+            lines.append("")
+            lines.append("=== VALGRIND ===")
+            lines.append("valgrind errors:")
+            lines.extend(map(str, test.result.valparse_out.errs))
+            lines.append("valgrind leaks:")
+            lines.extend(map(str, test.result.valparse_out.leaks))
+            if test.result.valparse_out.hasFatalSignal():
+                lines.append("valgrind fatal signal:")
+                lines.append(str(test.result.valparse_out.signal))
+
+        return "\n".join(lines)
+
+    def _test_status(self, test: IOTestCase) -> str:
+        """Summarize the status of the test (passed? failed? passed with memory errors?)"""
+        if test.result.valparse_out is None:
+            return "PASSED" if test.result.passed else "FAILED"
+        elif not test.result.output_correct:
+            return "FAILED"
+        elif test.result.valparse_out.hasErrors() or\
+              test.result.valparse_out.hasLeaks() or\
+              test.result.valparse_out.hasFatalSignal():
+            return "FAILED (output correct, but memory errors detected)"
+        else:
+            return "PASSED"
+
     def basic_io_output(self, test: IOTestCase):
         if not test.result.has_run or not test.runner:
             return "This test was not run."
@@ -164,16 +235,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                 ]
             )
 
-        if test.result.valparse_out is None:
-            status_str = "PASSED" if test.result.passed else "FAILED"
-        elif not test.result.output_correct:
-            status_str = "FAILED"
-        elif test.result.valparse_out.hasErrors() or\
-              test.result.valparse_out.hasLeaks() or\
-              test.result.valparse_out.hasFatalSignal():
-            status_str = "FAILED (output correct, but memory errors detected)"
-        else:
-            status_str = "PASSED"
+        status_str = self._test_status(test)
 
         summary = []
         summary.append(f"{status_str} in {test.runner.running_time:.2f} ms.")
@@ -217,14 +279,22 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         return "\n".join(summary)
 
     def format_io_test(self, test: IOTestCase):
+        if self.diff_format == "plain":
+            generated = self.basic_io_output(test)
+        elif self.diff_format == "ansi":
+            generated = self.generate_ansi_diff(test)
+        elif self.diff_format == "html":
+            generated = self.generate_html_diff(test)
+
+        output_format = {
+            "plain": "simple_format",
+            "ansi": "ansi",
+            "html": "html",
+        }
+
         return {
-            "output_format":
-                "html" if self.html_diff else "simple_format",
-            "output":
-                (
-                    self.generate_html_diff(test)
-                    if self.html_diff else self.basic_io_output(test)
-                ),
+            "output_format": output_format[self.diff_format],
+            "output": generated
         }
 
     def format_basic_test(self, test: BasicTestCase):

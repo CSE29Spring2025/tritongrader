@@ -27,7 +27,7 @@ if __name__ == "__main__":
         src=ag,
         message="tritongrader test",
         hidden_tests_setting="after_published",
-        html_diff=True,
+        diff_format="html",
     )
 
     pprint.pprint(formatter.execute())
