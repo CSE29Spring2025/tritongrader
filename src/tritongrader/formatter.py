@@ -152,37 +152,36 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         
         lines.append("Test status: " + self._test_status(test))
 
-        if test.result.passed:
+        if test.result.output_correct:
             lines += ["", test.expected_stdout]
-            return "\n".join(lines)
+        else:
+            diff_proc = subprocess.Popen([
+                "icdiff", "--head=1000", "-W", "--cols=120", "--color-map=line-numbers:cyan",
+                "-L", "Your output (stdout)", "-L", "Expected output (stdout)",
+                test.runner.stdout_tf, test.exp_stdout_path,
+            ], stdout=subprocess.PIPE, shell=False)
 
-        diff_proc = subprocess.Popen([
-            "icdiff", "--head=1000", "-N", "-W", "-s", "--cols=120",
-            "-L", "Your output (stdout)", "-L", "Expected output (stdout)",
-            test.runner.stdout_tf, test.exp_stdout_path,
-        ], stdout=subprocess.PIPE, shell=False)
+            diff_proc_2 = subprocess.Popen([
+                "icdiff", "--head=1000", "-W", "--cols=120", "--color-map=line-numbers:cyan",
+                "-L", "Your output (stderr)", "-L", "Expected output (stderr)",
+                test.runner.stderr_tf, test.exp_stderr_path,
+            ], stdout=subprocess.PIPE, shell=False)
 
-        diff_proc_2 = subprocess.Popen([
-            "icdiff", "--head=1000", "-N", "-W", "-s", "--cols=120",
-            "-L", "Your output (stderr)", "-L", "Expected output (stderr)",
-            test.runner.stderr_tf, test.exp_stderr_path,
-        ], stdout=subprocess.PIPE, shell=False)
+            try:
+                diff_proc.wait(timeout=2)
+            except Exception as e:
+                print("icdiff crashed!")
+                print(e)
+                return self.basic_io_output(test)
+            lines += [diff_proc.stdout.read().decode()]
 
-        try:
-            diff_proc.wait(timeout=2)
-        except Exception as e:
-            print("icdiff crashed!")
-            print(e)
-            return self.basic_io_output(test)
-        lines += ["", diff_proc.stdout.read().decode()]
-
-        try:
-            diff_proc_2.wait(timeout=2)
-        except Exception as e:
-            print("icdiff crashed!")
-            print(e)
-            return self.basic_io_output(test)
-        lines += ["", diff_proc_2.stdout.read().decode()]
+            try:
+                diff_proc_2.wait(timeout=2)
+            except Exception as e:
+                print("icdiff crashed!")
+                print(e)
+                return self.basic_io_output(test)
+            lines += [diff_proc_2.stdout.read().decode()]
 
         if test.result.valparse_out:
             lines.append("")
