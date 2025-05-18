@@ -40,6 +40,7 @@ class Autograder:
         compile_points: int = 0,
         missing_files_check: bool = True,
         compile_timeout: int = 3,
+        sandbox_customname: str = None,
     ):
         """
         Note: `build_command` must be given for compilation to happen; there is not implicit build
@@ -60,7 +61,7 @@ class Autograder:
         self.test_cases: List[TestCaseBase] = []
 
         # A sandbox directory where submission and test files will be copied to.
-        self.sandbox: TemporaryDirectory = self.create_sandbox_directory()
+        self.sandbox: str = self.create_sandbox_directory(sandbox_customname)
 
         self.missing_files_check_test_case = None
         if missing_files_check:
@@ -114,10 +115,14 @@ class Autograder:
             timeout=self.compile_timeout,
         )
 
-    def create_sandbox_directory(self) -> str:
-        tmpdir = TemporaryDirectory(prefix="Autograder_")
-        shutil.chown(tmpdir.name, "student")  # Assumes student user exists
-        logger.info(f"Sandbox created at {tmpdir.name}")
+    def create_sandbox_directory(self, custom_name: Optional[str]) -> str:
+        if custom_name:
+            tmpdir = os.path.join("/tmp", custom_name)
+            os.mkdir(tmpdir)
+        else:
+            tmpdir = TemporaryDirectory(prefix="Autograder_").name
+        shutil.chown(tmpdir, "student")  # Assumes student user exists
+        logger.info(f"Sandbox created at {tmpdir}")
         return tmpdir
 
     def add_test(self, test_case: TestCaseBase):
@@ -179,7 +184,7 @@ class Autograder:
 
     def copy2sandbox(self, src_dir, item):
         path = os.path.realpath(os.path.join(src_dir, item))
-        dst = os.path.join(self.sandbox.name, item)
+        dst = os.path.join(self.sandbox, item)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if os.path.isfile(path):
             shutil.copy2(path, dst)
@@ -198,7 +203,7 @@ class Autograder:
 
     def give_student_perms(self):
         """Give the student account ownership of all the copied files."""
-        for path in pathlib.Path(self.sandbox.name).glob("*"):
+        for path in pathlib.Path(self.sandbox).glob("*"):
             shutil.chown(path, "student")
 
     def _execute(self):
@@ -223,9 +228,9 @@ class Autograder:
 
     def execute(self):
         logger.debug(platform.uname())
-        logger.info(f"Running {self.name} test(s) in {self.sandbox.name}...")
+        logger.info(f"Running {self.name} test(s) in {self.sandbox}...")
         cwd = os.getcwd()
-        os.chdir(self.sandbox.name)
+        os.chdir(self.sandbox)
         self._execute()
         logger.info(f"Finished running {self.name} test(s). Returning to {cwd}")
         os.chdir(cwd)
