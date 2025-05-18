@@ -120,7 +120,8 @@ class Autograder:
             tmpdir = os.path.join("/tmp", custom_name)
             os.mkdir(tmpdir)
         else:
-            tmpdir = TemporaryDirectory(prefix="Autograder_").name
+            self.tmpdir = TemporaryDirectory(prefix="Autograder_")
+            tmpdir = self.tmpdir.name # A hack to ensure that the finalizer doesn't run
         shutil.chown(tmpdir, "student")  # Assumes student user exists
         logger.info(f"Sandbox created at {tmpdir}")
         return tmpdir
