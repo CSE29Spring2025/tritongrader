@@ -204,7 +204,7 @@ class Autograder:
 
     def give_student_perms(self):
         """Give the student account ownership of all the copied files."""
-        for path in pathlib.Path(self.sandbox).glob("*"):
+        for path in pathlib.Path(self.sandbox).glob("**/*"):
             shutil.chown(path, "student")
 
     def _execute(self):
