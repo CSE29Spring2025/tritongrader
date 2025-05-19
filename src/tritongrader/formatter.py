@@ -151,6 +151,10 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             lines.append("")
         
         lines.append("Test status: " + self._test_status(test))
+        lines.append("")
+
+        if test.test_input is not None:
+            lines.extend(["=== TEST INPUT ===", test.test_input, ""])
 
         if test.result.output_correct:
             lines += ["", test.expected_stdout]
