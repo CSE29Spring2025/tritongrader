@@ -156,13 +156,13 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             lines += ["", test.expected_stdout]
         else:
             diff_proc = subprocess.Popen([
-                "icdiff", "--head=1000", "-W", "--cols=120", "--color-map=line-numbers:cyan",
+                "icdiff", "--head=1000", "-W", "--cols=120",
                 "-L", "Your output (stdout)", "-L", "Expected output (stdout)",
                 test.runner.stdout_tf, test.exp_stdout_path,
             ], stdout=subprocess.PIPE, shell=False)
 
             diff_proc_2 = subprocess.Popen([
-                "icdiff", "--head=1000", "-W", "--cols=120", "--color-map=line-numbers:cyan",
+                "icdiff", "--head=1000", "-W", "--cols=120",
                 "-L", "Your output (stderr)", "-L", "Expected output (stderr)",
                 test.runner.stderr_tf, test.exp_stderr_path,
             ], stdout=subprocess.PIPE, shell=False)
@@ -182,6 +182,11 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
                 print(e)
                 return self.basic_io_output(test)
             lines += [diff_proc_2.stdout.read().decode()]
+
+        if test.exp_exit_status != test.exit_status:
+             lines.append("")
+             lines.append(f"Expected exit status of {test.exp_exit_status}, "
+                          f"but your exit status was {test.exit_status}.")
 
         if test.result.valparse_out:
             lines.append("")
