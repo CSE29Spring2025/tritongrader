@@ -91,16 +91,19 @@ class AnsiDiff:
         )
         with open(expected_path, 'rb') as exp:
             with open(actual_path, 'rb') as actual:
+                diffs_found = False
                 while True:
                     exp_line = exp.readline().decode(errors="ignore")
                     act_line = actual.readline().decode(errors="ignore")
                     if not exp_line and not act_line:
                         # reached EOF both sides
-                        return True
+                        return diffs_found
                     exp_line_shown = contract(exp_line)
                     act_line_shown = contract(act_line)
                     if exp_line_shown != act_line_shown:
                         return False
+                    if exp_line != act_line:
+                        diffs_found = True
 
     def _visualize_whitespace(self, fp: str):
         path = shlex.quote(fp)
