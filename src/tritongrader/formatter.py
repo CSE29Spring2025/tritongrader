@@ -116,7 +116,7 @@ class AnsiDiff:
         if self.stdout_truncated:
             messages.append("stdout is truncated because it is too large. You may have an infinite loop.")
         if self.whitespace_shown:
-            messages.append("whitespace and non-printable characters have been visualized in this output.")
+            messages.append("whitespace and non-printable characters have been visualized in this output to highlight their differences.")
 
         diff_proc = subprocess.Popen([
             "icdiff", "--head=1000", "-W", "--cols=120",
