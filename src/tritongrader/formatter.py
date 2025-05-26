@@ -79,6 +79,7 @@ class AnsiDiff:
             with open(filepath, 'rb') as read_fp:
                 content = read_fp.read(8192)  # To relieve the browser displaying Gradescope results
                                               # and to relieve icdiff / pr
+            os.remove(filepath)  # Files are are TOO BIG (>128 GB) may get appended to for some reason
             with open(filepath, 'wb') as write_fp:
                 write_fp.write(content)
             del content
@@ -125,32 +126,27 @@ class AnsiDiff:
         if self.stdout_truncated:
             # infinite loop should be evident from the actual output. No need to diff.
             # (icdiff takes too long for big files)
-            pr_proc = subprocess.Popen([
-                "pr", "-m", "-t", self.actual, self.expected
-            ], stdout=subprocess.PIPE)
-            try:
-                pr_proc.wait(timeout=20)
-            except Exception as e:
-                print(e)
-                raise e
+            pr_proc = subprocess.run([
+                "pr", "-m", "-t", "-w", "150", self.actual, self.expected
+            ], capture_output=True, timeout=20)
+            stdout = pr_proc.stdout
             diff_output = ""
             for i in range(1000):
-                b = pr_proc.stdout.readline()
-                if len(b) == 0:
+                if not stdout:
                     break
+                next_newline = stdout.index(b'\n')
+                if next_newline == -1:
+                    next_newline = len(stdout)
+                b = stdout[:next_newline+1]
+                stdout = stdout[next_newline+1:]
                 diff_output += b.decode(errors="ignore")
         else:
-            diff_proc = subprocess.Popen([
+            diff_proc = subprocess.run([
                 "icdiff", "--head=1000", "-W", "--cols=120",
                 "-L", f"Your output ({label})", "-L", f"Expected output ({label})",
                 self.actual, self.expected,
-            ], stdout=subprocess.PIPE, shell=False)
-            try:
-                diff_proc.wait(timeout=30)
-            except Exception as e:
-                print(e)
-                raise e
-            diff_output = diff_proc.stdout.read().decode(errors="ignore")
+            ], capture_output=True, timeout=30)
+            diff_output = diff_proc.stdout.decode(errors="ignore")
 
         if messages:
             return "\n".join("⚠️ " + msg for msg in messages) + "\n\n" + diff_output
@@ -256,7 +252,7 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         if not test.result.has_run or not test.runner:
             return "This test was not run."
         elif test.result.timed_out:
-            lines.append("Test case timed out with limit = {test.timeout}.")
+            lines.append(f"Test case timed out with limit = {test.timeout}.")
             lines.append("")
         
         lines.append("Test status: " + self._test_status(test))
