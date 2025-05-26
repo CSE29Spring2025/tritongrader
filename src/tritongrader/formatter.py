@@ -125,7 +125,7 @@ class AnsiDiff:
         ], stdout=subprocess.PIPE, shell=False)
 
         try:
-            diff_proc.wait(timeout=5)
+            diff_proc.wait(timeout=20)
         except Exception as e:
             print("icdiff crashed!")
             print(e)
