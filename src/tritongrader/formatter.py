@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import shlex
 import subprocess
 from typing import Dict, Callable, List, Optional, Union, Iterable
 from difflib import HtmlDiff
@@ -60,7 +61,9 @@ class AnsiDiff:
 
     def __init__(self, expected_path: str, actual_path: str):
         self.stdout_truncated = self._truncate_if_needed(actual_path)
+        self.whitespace_shown = False
         if self._should_visualize_whitespace(expected_path, actual_path):
+            self.whitespace_shown = True
             self._visualize_whitespace(expected_path)
             self._visualize_whitespace(actual_path)
         self.expected = expected_path
@@ -70,9 +73,9 @@ class AnsiDiff:
         """Truncate an output file as needed to ensure
         that the file fits in memory."""
         num_bytes = os.path.getsize(filepath)
-        if num_bytes > CommandRunner.TOOBIG_THRESHOLD:
+        if num_bytes > 128000:
             with open(filepath, 'rb') as read_fp:
-                content = read_fp.read(CommandRunner.TOOBIG_THRESHOLD)
+                content = read_fp.read(128000)
             with open(filepath, 'wb') as write_fp:
                 write_fp.write(content)
             del content
@@ -100,9 +103,18 @@ class AnsiDiff:
                         return False
 
     def _visualize_whitespace(self, fp: str):
-        subprocess.call(["bat", "-A", fp, ">", fp], shell=True)
+        path = shlex.quote(fp)
+        altpath = shlex.quote(fp + ".tmp")
+        os.system(f"batcat -A {path} > {altpath}")
+        os.system(f"mv {altpath} {path}")
 
     def render_diff(self, label: str = "stdout") -> str:
+        messages = []
+        if self.stdout_truncated:
+            messages.append("stdout is truncated because it is too large. You may have an infinite loop.")
+        if self.whitespace_shown:
+            messages.append("whitespace and non-printable characters have been visualized in this output.")
+
         diff_proc = subprocess.Popen([
             "icdiff", "--head=1000", "-W", "--cols=120",
             "-L", f"Your output ({label})", "-L", f"Expected output ({label})",
@@ -115,7 +127,11 @@ class AnsiDiff:
             print("icdiff crashed!")
             print(e)
             raise e
-        return diff_proc.stdout.read().decode(errors="ignore")
+        
+        diff_output = diff_proc.stdout.read().decode(errors="ignore")
+        if messages:
+            return "\n".join("⚠️ " + msg for msg in messages) + "\n\n" + diff_output
+        return diff_output
 
 class GradescopeResultsFormatter(ResultsFormatterBase):
     def __init__(
