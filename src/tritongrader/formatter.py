@@ -73,9 +73,9 @@ class AnsiDiff:
         """Truncate an output file as needed to ensure
         that the file fits in memory."""
         num_bytes = os.path.getsize(filepath)
-        if num_bytes > 128000:
+        if num_bytes > 80000:
             with open(filepath, 'rb') as read_fp:
-                content = read_fp.read(128000)
+                content = read_fp.read(80000)
             with open(filepath, 'wb') as write_fp:
                 write_fp.write(content)
             del content
@@ -125,7 +125,7 @@ class AnsiDiff:
         ], stdout=subprocess.PIPE, shell=False)
 
         try:
-            diff_proc.wait(timeout=20)
+            diff_proc.wait(timeout=120)
         except Exception as e:
             print("icdiff crashed!")
             print(e)

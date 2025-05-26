@@ -158,6 +158,7 @@ class IOTestCase(TestCaseBase):
         except subprocess.TimeoutExpired:
             logger.info(f"{self.name} timed out (limit={self.timeout}s)!")
             self.result.timed_out = True
+            self.exit_status = None
 
     def check_valgrind_result(self):
         try:
