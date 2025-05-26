@@ -74,13 +74,15 @@ class AnsiDiff:
         that the file fits in memory."""
         num_bytes = os.path.getsize(filepath)
         if num_bytes > 80000:
-            logger.info("The output file %s is too big (%d bytes). It will be truncated.",
+            logger.info("Output file %s too big (%d bytes). It will be truncated.",
                         filepath, num_bytes)
             with open(filepath, 'rb') as read_fp:
-                content = read_fp.read(80000)
+                content = read_fp.read(8192)  # To relieve the browser displaying Gradescope results
+                                              # and to relieve icdiff / pr
             with open(filepath, 'wb') as write_fp:
                 write_fp.write(content)
             del content
+            logger.info("Output file %s size now %d bytes.", filepath, os.path.getsize(filepath))
             return True
         return False
 
