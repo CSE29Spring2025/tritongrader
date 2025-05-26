@@ -110,11 +110,9 @@ class CommandRunner:
                     while (pos < 4096):
                         msg += fp.readline(4096 - pos)
                         pos = fp.tell()
-                    fp.close()
                     return msg
                 else:
                     msg = fp.read()
-                    fp.close()
                     return msg
             except UnicodeDecodeError as e:
                 return f"tritongrader: error decoding stdout as UTF-8: {e}"

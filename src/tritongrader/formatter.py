@@ -1,10 +1,12 @@
 import json
 import logging
+import os
 import subprocess
-from typing import Dict, Callable, List, Union, Iterable
+from typing import Dict, Callable, List, Optional, Union, Iterable
 from difflib import HtmlDiff
 from tritongrader import Autograder
 
+from tritongrader.runner import CommandRunner
 from tritongrader.test_case import TestCaseBase
 from tritongrader.test_case import IOTestCase
 from tritongrader.test_case import BasicTestCase
@@ -46,6 +48,74 @@ class ResultsFormatterBase:
     def execute(self):
         raise NotImplementedError
 
+
+class AnsiDiff:
+    """A helpful and robust display of file diffs using ANSI colors.
+    
+    Features:
+    - display of whitespace differences
+    - handling large files
+    - handling invalid UTF-8
+    """
+
+    def __init__(self, expected_path: str, actual_path: str):
+        self.stdout_truncated = self._truncate_if_needed(actual_path)
+        if self._should_visualize_whitespace(expected_path, actual_path):
+            self._visualize_whitespace(expected_path)
+            self._visualize_whitespace(actual_path)
+        self.expected = expected_path
+        self.actual = actual_path
+
+    def _truncate_if_needed(self, filepath: str) -> bool:
+        """Truncate an output file as needed to ensure
+        that the file fits in memory."""
+        num_bytes = os.path.getsize(filepath)
+        if num_bytes > CommandRunner.TOOBIG_THRESHOLD:
+            with open(filepath, 'rb') as read_fp:
+                content = read_fp.read(CommandRunner.TOOBIG_THRESHOLD)
+            with open(filepath, 'wb') as write_fp:
+                write_fp.write(content)
+            del content
+            return True
+        return False
+
+    def _should_visualize_whitespace(self,
+                                    expected_path: str,
+                                    actual_path: str) -> bool:
+        """Determine if two files only differ in whitespace (or non-printable characters)."""
+        contract = lambda line: "".join(
+            ch for ch in line if ch.isprintable() and not ch.isspace()
+        )
+        with open(expected_path, 'rb') as exp:
+            with open(actual_path, 'rb') as actual:
+                while True:
+                    exp_line = exp.readline().decode(errors="ignore")
+                    act_line = actual.readline().decode(errors="ignore")
+                    if not exp_line and not act_line:
+                        # reached EOF both sides
+                        return True
+                    exp_line_shown = contract(exp_line)
+                    act_line_shown = contract(act_line)
+                    if exp_line_shown != act_line_shown:
+                        return False
+
+    def _visualize_whitespace(self, fp: str):
+        subprocess.call(["bat", "-A", fp, ">", fp], shell=True)
+
+    def render_diff(self, label: str = "stdout") -> str:
+        diff_proc = subprocess.Popen([
+            "icdiff", "--head=1000", "-W", "--cols=120",
+            "-L", f"Your output ({label})", "-L", f"Expected output ({label})",
+            self.actual, self.expected,
+        ], stdout=subprocess.PIPE, shell=False)
+
+        try:
+            diff_proc.wait(timeout=5)
+        except Exception as e:
+            print("icdiff crashed!")
+            print(e)
+            raise e
+        return diff_proc.stdout.read().decode(errors="ignore")
 
 class GradescopeResultsFormatter(ResultsFormatterBase):
     def __init__(
@@ -157,35 +227,15 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             lines.extend(["=== TEST INPUT ===", test.test_input, ""])
 
         if test.result.output_correct:
-            lines += ["", test.expected_stdout]
+            lines += ["", "=== TEST OUTPUT ===", test.expected_stdout]
         else:
-            diff_proc = subprocess.Popen([
-                "icdiff", "--head=1000", "-W", "--cols=120",
-                "-L", "Your output (stdout)", "-L", "Expected output (stdout)",
-                test.runner.stdout_tf, test.exp_stdout_path,
-            ], stdout=subprocess.PIPE, shell=False)
-
-            diff_proc_2 = subprocess.Popen([
-                "icdiff", "--head=1000", "-W", "--cols=120",
-                "-L", "Your output (stderr)", "-L", "Expected output (stderr)",
-                test.runner.stderr_tf, test.exp_stderr_path,
-            ], stdout=subprocess.PIPE, shell=False)
-
+            stdout_diff = AnsiDiff(test.exp_stdout_path, test.runner.stdout_tf)
+            stderr_diff = AnsiDiff(test.exp_stderr_path, test.runner.stderr_tf)
             try:
-                diff_proc.wait(timeout=2)
+                lines.append(stdout_diff.render_diff(label="stdout"))
+                lines.append(stderr_diff.render_diff(label="stderr"))
             except Exception as e:
-                print("icdiff crashed!")
-                print(e)
                 return self.basic_io_output(test)
-            lines += [diff_proc.stdout.read().decode()]
-
-            try:
-                diff_proc_2.wait(timeout=2)
-            except Exception as e:
-                print("icdiff crashed!")
-                print(e)
-                return self.basic_io_output(test)
-            lines += [diff_proc_2.stdout.read().decode()]
 
         if test.exp_exit_status != test.exit_status:
              lines.append("")
