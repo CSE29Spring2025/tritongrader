@@ -74,6 +74,8 @@ class AnsiDiff:
         that the file fits in memory."""
         num_bytes = os.path.getsize(filepath)
         if num_bytes > 80000:
+            logger.info("The output file %s is too big (%d bytes). It will be truncated.",
+                        filepath, num_bytes)
             with open(filepath, 'rb') as read_fp:
                 content = read_fp.read(80000)
             with open(filepath, 'wb') as write_fp:
@@ -113,25 +115,41 @@ class AnsiDiff:
 
     def render_diff(self, label: str = "stdout") -> str:
         messages = []
-        if self.stdout_truncated:
-            messages.append("stdout is truncated because it is too large. You may have an infinite loop.")
         if self.whitespace_shown:
             messages.append("whitespace and non-printable characters have been visualized in this output to highlight their differences.")
+        if self.stdout_truncated:
+            messages.append("stdout is truncated because it is too large. You may have an infinite loop.")
 
-        diff_proc = subprocess.Popen([
-            "icdiff", "--head=1000", "-W", "--cols=120",
-            "-L", f"Your output ({label})", "-L", f"Expected output ({label})",
-            self.actual, self.expected,
-        ], stdout=subprocess.PIPE, shell=False)
+        if self.stdout_truncated:
+            # infinite loop should be evident from the actual output. No need to diff.
+            # (icdiff takes too long for big files)
+            pr_proc = subprocess.Popen([
+                "pr", "-m", "-t", self.actual, self.expected
+            ], stdout=subprocess.PIPE)
+            try:
+                pr_proc.wait(timeout=20)
+            except Exception as e:
+                print(e)
+                raise e
+            diff_output = ""
+            for i in range(1000):
+                b = pr_proc.stdout.readline()
+                if len(b) == 0:
+                    break
+                diff_output += b.decode(errors="ignore")
+        else:
+            diff_proc = subprocess.Popen([
+                "icdiff", "--head=1000", "-W", "--cols=120",
+                "-L", f"Your output ({label})", "-L", f"Expected output ({label})",
+                self.actual, self.expected,
+            ], stdout=subprocess.PIPE, shell=False)
+            try:
+                diff_proc.wait(timeout=30)
+            except Exception as e:
+                print(e)
+                raise e
+            diff_output = diff_proc.stdout.read().decode(errors="ignore")
 
-        try:
-            diff_proc.wait(timeout=120)
-        except Exception as e:
-            print("icdiff crashed!")
-            print(e)
-            raise e
-        
-        diff_output = diff_proc.stdout.read().decode(errors="ignore")
         if messages:
             return "\n".join("⚠️ " + msg for msg in messages) + "\n\n" + diff_output
         return diff_output
