@@ -61,11 +61,11 @@ class AnsiDiff:
 
     def __init__(self, expected_path: str, actual_path: str):
         self.stdout_truncated = self._truncate_if_needed(actual_path)
-        self.whitespace_shown = False
-        if self._should_visualize_whitespace(expected_path, actual_path):
-            self.whitespace_shown = True
-            self._visualize_whitespace(expected_path)
-            self._visualize_whitespace(actual_path)
+        # self.whitespace_shown = False
+        # if self._should_visualize_whitespace(expected_path, actual_path):
+        self.whitespace_shown = True
+        self._visualize_whitespace(expected_path)
+        self._visualize_whitespace(actual_path)
         self.expected = expected_path
         self.actual = actual_path
 
@@ -119,7 +119,10 @@ class AnsiDiff:
     def render_diff(self, label: str = "stdout") -> str:
         messages = []
         if self.whitespace_shown:
-            messages.append("whitespace and non-printable characters have been visualized in this output to highlight their differences.")
+            messages.append(
+                "whitespace and non-printable characters have been visualized in this output to highlight their differences.\n"
+                "  '␊' means newline ('\\n'). '·' means space (' ')."
+            )
         if self.stdout_truncated:
             messages.append("stdout is truncated because it is too large. You may have an infinite loop.")
 
