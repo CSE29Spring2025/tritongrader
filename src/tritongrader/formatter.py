@@ -210,6 +210,8 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             return "<i>This test was not run.</i>"
         elif test.result.timed_out:
             return f"<i>Test case timed out with limit = {test.timeout}.</i>"
+        elif test.result.crash:
+            return f"<i>Test case crashed: <code>{test.result.crash}</code>.</i>"
 
         stdout_diff = self.html_diff_make_table(
             fromtext=test.actual_stdout or "",
@@ -257,7 +259,10 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
         elif test.result.timed_out:
             lines.append(f"Test case timed out with limit = {test.timeout}.")
             lines.append("")
-        
+        elif test.result.crash:
+            lines.append(f"Test case crashed: {test.result.crash}")
+            lines.append("")
+
         lines.append("Test status: " + self._test_status(test))
         lines.append("")
 
@@ -324,6 +329,16 @@ class GradescopeResultsFormatter(ResultsFormatterBase):
             return "\n".join(
                 [
                     f"Test case timed out with limit = {test.timeout}.",
+                    "== stdout ==",
+                    test.actual_stdout,
+                    "== stderr ==",
+                    test.actual_stderr,
+                ]
+            )
+        if test.result.crash:
+            return "\n".join(
+                [
+                    f"Test case crashed: {test.result.crash}",
                     "== stdout ==",
                     test.actual_stdout,
                     "== stderr ==",
