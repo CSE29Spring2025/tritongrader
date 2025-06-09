@@ -3,6 +3,7 @@ import shutil
 import logging
 import subprocess
 
+import traceback
 from typing import Optional
 
 from tritongrader.test_case.test_case_base import TestCaseBase, TestResultBase
@@ -158,6 +159,14 @@ class IOTestCase(TestCaseBase):
         except subprocess.TimeoutExpired:
             logger.info(f"{self.name} timed out (limit={self.timeout}s)!")
             self.result.timed_out = True
+            self.exit_status = None
+        except OSError as err:
+            logger.info(f"{self.name} caused OSError: {err}")
+            self.result.crash = err
+            self.exit_status = None
+        except:
+            traceback.print_exc()
+            self.result.error = True
             self.exit_status = None
 
     def check_valgrind_result(self):

@@ -1,8 +1,12 @@
+from typing import Optional
+
+
 class TestResultBase:
     def __init__(self):
         self.score: int = 0
         self.passed: bool = False
         self.timed_out: bool = False
+        self.crash: Optional[OSError] = None
         self.error: bool = False
         self.running_time: float = None
         self.has_run: bool = False
